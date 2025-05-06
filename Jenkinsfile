@@ -2,42 +2,39 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = credentials('docker_username') // Jenkins credentials ID for Docker Hub username
-        DOCKER_PASS = credentials('docker-password') // Jenkins credentials ID for Docker Hub password
+        DOCKER_USER = credentials('docker_username') // Docker Hub username
+        DOCKER_PASS = credentials('docker-password') // Docker Hub password
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/JashodaKumawat123/indexapp.git', branch: 'main'
+                git url: 'https://github.com/JashodaKumawat123/indexapi.git', branch: 'main'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 bat """
-                    docker build -t %DOCKER_USER%/indexapp:latest .
+                    docker build -t %DOCKER_USER%/indexapi:latest .
                 """
             }
         }
 
         stage('Docker Login and Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    bat """
-                        echo %PASS% | docker login -u %USER% --password-stdin
-                        docker tag %USER%/indexapp:latest %USER%/indexapp:latest
-                        docker push %USER%/indexapp:latest
-                    """
-                }
+                bat """
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                    docker push %DOCKER_USER%/indexapi:latest
+                """
             }
         }
 
         stage('Run Docker Container') {
             steps {
                 bat """
-                    docker rm -f indexapp-container || echo "No container to remove"
-                    docker run -d -p 3000:80 --name indexapp-container %DOCKER_USER%/indexapp:latest
+                    docker rm -f indexapi-container || echo "No container to remove"
+                    docker run -d -p 3000:80 --name indexapi-container %DOCKER_USER%/indexapi:latest
                 """
             }
         }
