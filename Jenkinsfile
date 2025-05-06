@@ -1,14 +1,16 @@
 pipeline {
     agent any
-
+    
     environment {
-        DOCKER_USER = credentials('docker-username') // Jenkins credentials ID for DockerHub username
-        DOCKER_PASS = credentials('docker-password') // Jenkins credentials ID for DockerHub password
-        IMAGE_NAME = "${DOCKER_USER}/indexapi"
+        // Define the credentials for DockerHub login
+        DOCKER_USER = credentials('docker_username')  // docker_username is the credential ID
+        DOCKER_PASS = credentials('docker-password')  // docker-password is the credential ID
+        
+        IMAGE_NAME = "your-dockerhub-username/indexapi" // Replace with your DockerHub username
         CONTAINER_NAME = "indexapi-container"
-        PORT = "3001" // You can change this to any unused port
+        PORT = "3000"  // Adjust port if needed
     }
-
+    
     stages {
         stage('Checkout SCM') {
             steps {
@@ -18,38 +20,39 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %IMAGE_NAME% ."
+                bat "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
         stage('Docker Login and Push') {
             steps {
-                bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
-                bat "docker push %IMAGE_NAME%"
+                script {
+                    // Docker login using credentials stored in Jenkins
+                    bat "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                    bat "docker push ${IMAGE_NAME}:latest"
+                }
             }
         }
 
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Stop and remove existing container if it exists
-                    bat "docker rm -f %CONTAINER_NAME% || echo No container to remove"
+                    // Stop and remove any existing container
+                    bat "docker rm -f ${CONTAINER_NAME} || echo 'No container to remove'"
                     
-                    // Run the new container on defined PORT
-                    bat """
-                        docker run -d -p %PORT%:80 --name %CONTAINER_NAME% %IMAGE_NAME%
-                    """
+                    // Run a new container
+                    bat "docker run -d -p ${PORT}:80 --name ${CONTAINER_NAME} ${IMAGE_NAME}:latest"
                 }
             }
         }
     }
-
+    
     post {
         always {
-            echo "Pipeline completed."
+            echo 'Pipeline completed.'
         }
         failure {
-            echo "Pipeline failed. Please check the logs above."
+            echo 'Pipeline failed. Please check the logs above.'
         }
     }
 }
