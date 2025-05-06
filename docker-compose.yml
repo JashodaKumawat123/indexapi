@@ -1,7 +1,9 @@
-version: '3'
+version: '3.8'
+
 services:
-  indexapp:
+  indexapi:
     build: .
-    container_name: indexapp-container
+    container_name: indexapi-container
     ports:
       - "3000:80"
+    restart: unless-stopped

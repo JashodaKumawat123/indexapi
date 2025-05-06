@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = credentials('docker_username') // Docker Hub username
-        DOCKER_PASS = credentials('docker-password') // Docker Hub password
+        DOCKER_USER = credentials('docker_username') // Docker Hub username credential ID
+        DOCKER_PASS = credentials('docker-password') // Docker Hub password credential ID
     }
 
     stages {
@@ -15,9 +15,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat """
-                    docker build -t %DOCKER_USER%/indexapi:latest .
-                """
+                bat "docker build -t %DOCKER_USER%/indexapi:latest ."
             }
         }
 
