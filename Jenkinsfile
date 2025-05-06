@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = credentials('docker_username') // Jenkins credentials ID
-        DOCKER_PASS = credentials('docker-password') // Jenkins credentials ID
+        DOCKER_USER = credentials('docker_username') // Jenkins credentials ID for Docker Hub username
+        DOCKER_PASS = credentials('docker-password') // Jenkins credentials ID for Docker Hub password
     }
 
     stages {
@@ -15,16 +15,21 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %DOCKER_USER%/indexapp:latest .'
+                bat """
+                    docker build -t %DOCKER_USER%/indexapp:latest .
+                """
             }
         }
 
         stage('Docker Login and Push') {
             steps {
-                bat """
-                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                    docker push %DOCKER_USER%/indexapp:latest
-                """
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    bat """
+                        echo %PASS% | docker login -u %USER% --password-stdin
+                        docker tag %USER%/indexapp:latest %USER%/indexapp:latest
+                        docker push %USER%/indexapp:latest
+                    """
+                }
             }
         }
 
